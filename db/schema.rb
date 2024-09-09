@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_03_28_083817) do
+ActiveRecord::Schema.define(version: 2022_03_28_083813) do
 
   create_table "sessions", force: :cascade do |t|
     t.string "token"

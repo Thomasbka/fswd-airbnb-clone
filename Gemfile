@@ -3,6 +3,8 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '3.1.2'
 
+# Use kaminari for activerecord pagnation
+gem 'kaminari'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.1.6.1'
 # Use Puma as the app server
@@ -70,7 +72,7 @@ group :development do
   gem 'spring-watcher-listen', '~> 2.0.1'
 
   # Use sqlite3 as the database for Active Record
-  gem 'sqlite3', '~> 1.4'
+  gem 'sqlite3', '~> 1.7.3'
 end
 
 group :production do
