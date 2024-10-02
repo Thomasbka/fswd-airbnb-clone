@@ -19,7 +19,7 @@ module Api
             currency: 'usd',
             unit_amount: (amount * 100.0).to_i,
             product_data: {
-              name: "Trup for #{property.title}",
+              name: "Trip for #{property.title}",
               description: "Your booking is for #{booking.start_date} to #{booking.end_date}.",
             },
           },
@@ -41,6 +41,37 @@ module Api
       else
         render json: { error: 'charge could not be created' }, status: :bad_request
       end
+    end
+
+    def mark_complete
+      endpoint_secret = ENV['STRIPE_MARK_COMPLETE_WEBHOOK_SIGNING_SECRET']
+
+      event = nil
+
+      begin
+        sig_header = request.env['HTTP_STRIPE_SIGNATURE']
+        payload = request.body.read
+        event = Stripe::Webhook.construct_event(
+          payload, sig_header, endpoint_secret
+        )
+      rescue JSON::ParserError => e
+        return head :bad_request
+      rescue Stripe::SignatureVerificationError => e
+        return head :bad_request
+      end
+
+      if event['type'] == 'checkout.session.completed'
+        session = event['data']['object']
+
+        charge = Charge.find_by(checkout_session_id: sesion.id)
+        return head :bad_request if !charge
+
+        charge.update({ complete: true })
+
+        return head :ok
+      end
+
+      return head :bad_request
     end
   end
 end

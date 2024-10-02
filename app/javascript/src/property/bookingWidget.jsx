@@ -39,6 +39,24 @@ class BookingWidget extends React.Component {
       })
   }
 
+  initiateStripeCheckout = (booking_id) => {
+    return fetch(`/api/charges?booking_id=${booking_id}&cancel_url=${window.location.pathname}`, safeCredentials({
+      method: 'POST',
+    }))
+    .then(handleErrors)
+    .then(response => {
+      const stripe = Stripe(`${process.env.STRIPE_PUBLISHABLE_KEY}`);
+
+      stripe.redirectToCheckout({
+        sessionId: response.charge.checkout_session_id,
+      }).then((result) => {
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+  }
+
   submitBooking = (e) => {
     if (e) { e.preventDefault(); }
     const { startDate, endDate } = this.state;
@@ -56,7 +74,7 @@ class BookingWidget extends React.Component {
     }))
       .then(handleErrors)
       .then(response => {
-        console.log(response);
+        return this.initiateStripeCheckout(response.booking.id)
       })
       .catch(error => {
         console.log(error);
