@@ -13,5 +13,21 @@ module Api
 
       render 'api/properties/show', status: :ok
     end
+
+    def update
+      @property = Property.find(params[:id])
+
+      if @property.update(property_params)
+        render json: { property: @property, message: 'Property updated successfully' }, status: :ok
+      else
+        render json: { errors: @property.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
+
+    private
+
+    def property_params
+      params.require(:property).permit(:title, :description, :price_per_night, :image_url)
+    end
   end
 end

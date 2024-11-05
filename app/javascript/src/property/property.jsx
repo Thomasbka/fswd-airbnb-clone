@@ -1,6 +1,7 @@
 import React from 'react';
 import Layout from '@src/layout';
 import BookingWidget from './bookingWidget';
+import EditPropertyForm from './editPropertyForm';
 import { handleErrors } from '@utils/fetchHelper';
 
 import './property.scss';
@@ -9,6 +10,7 @@ class Property extends React.Component {
   state = {
     property: {},
     loading: true,
+    editing: false,
   }
 
   componentDidMount() {
@@ -22,8 +24,16 @@ class Property extends React.Component {
       })
   }
 
+  toggleEditing = () => {
+    this.setState(prevState => ({ editing: !prevState.editing }));
+  }
+
+  handleUpdate = (updatedProperty) => {
+    this.setState({ property: updatedProperty, editing: false });
+  }
+
   render () {
-    const { property, loading } = this.state;
+    const { property, loading, editing } = this.state;
     if (loading) {
       return <p>loading...</p>;
     };
@@ -70,6 +80,16 @@ class Property extends React.Component {
             <div className="col-12 col-lg-5">
               <BookingWidget property_id={id} price_per_night={price_per_night} />
             </div>
+            <button onClick={this.toggleEditing}>
+              {editing ? 'Cancel edit' : 'Edit Property'}
+            </button>
+            {editing && (
+              <EditPropertyForm 
+                property={property} 
+                onUpdate={this.handleUpdate}
+                onCancel={this.toggleEditing}
+              />
+            )}
           </div>
         </div>
       </Layout>
