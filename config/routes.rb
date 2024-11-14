@@ -8,7 +8,11 @@ Rails.application.routes.draw do
     # Add routes below this line
     resources :users, only: [:create]
     resources :sessions, only: [:create, :destroy]
-    resources :properties, only: [:index, :show]
+    resources :properties, only: [:index, :show] do
+      collection do
+        post :upload_image
+      end
+    end
     resources :bookings, only: [:create]
     resources :charges, only: [:create]
 
@@ -16,6 +20,8 @@ Rails.application.routes.draw do
     get '/authenticated' => 'sessions#authenticated'
 
     post '/charges/mark_complete' => 'charges#mark_complete'
+
+    get '/current_user' => 'users#current_user'
 
   end
 

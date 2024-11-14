@@ -9,6 +9,8 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
     price_per_night: property.price_per_night || '',
     image_url: property.image_url || '',
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,8 +20,45 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
+  };
+
+  const handleImageUpload = () => {
+    if (!imageFile) return;
+    
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    fetch('/api/properties/upload_image', {
+      method: 'POST',
+      body: formData,
+      ...safeCredentials(),
+    })
+      .then(handleErrors)
+      .then(data => {
+        setFormData(prevData => ({
+          ...prevData,
+          image_url: data.image_url,
+        }));
+        setIsUploading(false);
+        alert('Image uploaded successfully!');
+      })
+      .catch(error => {
+        console.error('Error uploading image:', error);
+        setIsUploading(false);
+        alert('There was an error uploading the image.');
+      });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (imageFile && !formData.image_url) {
+      alert("Please upload the image first.");
+      return;
+    }
 
     fetch(`/api/properties/${property.id}`, {
       method: 'PATCH',
@@ -57,11 +96,14 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
         </div>
 
         <div className="form-group">
-          <label>Image URL:</label>
-          <input type="text" name="image_url" value={formData.image_url} onChange={handleChange} />
+          <label>Image:</label>
+          <input type="file" onChange={handleImageChange} />
+          <button type="button" onClick={handleImageUpload} disabled={!imageFile || isUploading}>
+            {isUploading ? 'Uploading...' : 'Upload Image'}
+          </button>
         </div>
 
-        <button type="submit">Save Changes</button>
+        <button type="submit" disabled={isUploading}>Save Changes</button>
         {onCancel && (
           <button type="button" className="cancel-button" onClick={onCancel}>
             Cancel

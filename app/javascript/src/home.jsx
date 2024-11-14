@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Layout from '@src/layout';
-import { handleErrors } from '@utils/fetchHelper';
+import { handleErrors, safeCredentials } from '@utils/fetchHelper';
 
 import './home.scss';
 
@@ -11,6 +11,7 @@ class Home extends React.Component {
     total_pages: null,
     next_page: null,
     loading: true,
+    currentUser: null,
   }
 
   componentDidMount() {
@@ -24,6 +25,15 @@ class Home extends React.Component {
           loading: false,
         })
       })
+  
+    fetch('api/current_user', safeCredentials())
+      .then(handleErrors)
+      .then(data => {
+        this.setState({ currentUser: data.user });
+      })
+      .catch(error => {
+        console.log("User not logged in:", error);
+      });
   }
 
   loadMore = () => {
@@ -44,7 +54,7 @@ class Home extends React.Component {
   }
 
   render () {
-    const { properties, next_page, loading } = this.state;
+    const { properties, next_page, loading, currentUser } = this.state;
     return (
       <Layout>
         <div className="container pt-4">

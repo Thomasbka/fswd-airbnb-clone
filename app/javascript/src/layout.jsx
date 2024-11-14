@@ -2,6 +2,8 @@ import React from 'react';
 import './layout.scss';
 
 const Layout = (props) => {
+  const { currentUser } = props;
+
   return (
     <React.Fragment>
       <nav className="navbar navbar-expand navbar-light bg-light">
@@ -12,6 +14,11 @@ const Layout = (props) => {
               <li className="nav-item">
                 <a className="nav-link" href="/">Home</a>
               </li>
+              {currentUser && (
+                <li className="nav-item">
+                  <a className="nav-link" href="/properties/new">Create Property</a>
+                </li>
+              )}
             </ul>
           </div>
         </div>
