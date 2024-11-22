@@ -1,5 +1,11 @@
 <%= javascript_packs_with_chunks_tag 'property', 'application' %>
 <%= stylesheet_packs_with_chunks_tag 'property', 'application' %>
 
+<!-- React mounting point -->
+<div id="react-root"></div>
+
+<!-- Rails data passed to the client -->
 <div id="params" data-params="<%= @data %>"></div>
+
+<!-- Stripe -->
 <script src="https://js.stripe.com/v3/"></script>

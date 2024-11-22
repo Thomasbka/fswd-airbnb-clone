@@ -6,32 +6,22 @@ module Api
       if @user.save
         render 'api/users/create', status: :created
       else
-        render json: { success: false }, status: :bad_request
+        render json: { success: false, errors: @user.errors.full_messages }, status: :unprocessable_entity
       end
     end
 
     def current_user
-      if session[:user_id]
-        user = User.find_by(id: session[:user_id])
-        if user
-          render json: { user: user }
-        else
-          render json: { error: "User not found" }, status: :not_found
-        end
+      token = cookies.signed[:airbnb_session_token]
+      session = Session.find_by(token: token)
+
+      if session && session.user
+        render json: { user: session.user }, status: :ok
       else
-        render json: { error: "Not logged in" }, status: :unauthorized
+        render json: { error: "Not logged in or session expired" }, status: :unauthorized
       end
     end
 
     private
-
-    def find_current_user
-      @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
-    end
-
-    def logged_in?
-      session[:user_id].present?
-    end
 
     def user_params
       params.require(:user).permit(:email, :password, :username)
