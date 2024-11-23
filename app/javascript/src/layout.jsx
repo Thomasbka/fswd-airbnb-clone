@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './layout.scss';
+import '../src/layout.scss';
 
 const Layout = (props) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -37,9 +37,13 @@ const Layout = (props) => {
               <li className="nav-item">
                 <a className="nav-link" href="/">Home</a>
               </li>
-              {currentUser && (
+              {currentUser ? (
                 <li className="nav-item">
                   <a className="nav-link" href="/properties/new">Create Property</a>
+                </li>
+              ) : (
+                <li className="nav-item">
+                  <a className="nav-link" href="/login">Log In</a>
                 </li>
               )}
             </ul>

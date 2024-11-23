@@ -93,7 +93,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
     <Layout>
     <div className="create-property-form">
       <h2>Create Property</h2>
-      <form classname="container" onSubmit={handleSubmit}>
+      <form className="container" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Title:</label>
           <input type="text" name="title" onChange={handleChange} required />
