@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { safeCredentials, handleErrors } from '@utils/fetchHelper';
 import './createProperty.scss';
+import Layout from '../layout';
 
 const CreateProperty = ({ onCreateSuccess }) => {
   const [formData, setFormData] = useState({
@@ -89,6 +90,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
   };
 
   return (
+    <Layout>
     <div className="create-property-form">
       <h2>Create Property</h2>
       <form classname="container" onSubmit={handleSubmit}>
@@ -133,6 +135,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
         <button type="submit" disabled={isUploading}>Create Property</button>
       </form>
     </div>
+    </Layout>
   );
 };
 
