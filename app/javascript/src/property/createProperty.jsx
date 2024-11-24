@@ -20,6 +20,13 @@ const CreateProperty = ({ onCreateSuccess }) => {
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const requiredLabel = (label) => (
+    <span>
+      {label}
+      <span style={{ color: 'red' }}> *</span>
+    </span>
+  );
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     if (type === 'file') {
@@ -30,16 +37,26 @@ const CreateProperty = ({ onCreateSuccess }) => {
   };
 
   const handleImageUpload = () => {
-    if (!imageFile) return;
-
+    if (!imageFile) {
+      alert('No image selected');
+      return;
+    }
+  
     setIsUploading(true);
+  
     const uploadData = new FormData();
     uploadData.append('image', imageFile);
-
+  
+    const csrfToken = document.querySelector('[name=csrf-token]')?.content;
+  
+    console.log('UploadData:', Array.from(uploadData.entries()));
+  
     fetch('/api/properties/upload_image', {
       method: 'POST',
       body: uploadData,
-      ...safeCredentials(),
+      headers: {
+        'X-CSRF-Token': csrfToken,
+      },
     })
       .then(handleErrors)
       .then(data => {
@@ -56,20 +73,38 @@ const CreateProperty = ({ onCreateSuccess }) => {
         alert('There was an error uploading the image.');
       });
   };
-
+  
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     if (imageFile && !formData.image_url) {
       alert('Please upload the image first.');
       return;
     }
 
+    const requiredFields = ['title', 'description', 'city', 'country', 'property_type', 'price_per_night', 'max_guests'];
+    for (const field of requiredFields) {
+      if (!formData[field] || formData[field].toString().trim() === '') {
+        alert(`The field "${field}" is required.`);
+        return;
+      }
+    }
+
+    const numberFields = ['price_per_night', 'max_guests', 'bedrooms', 'beds', 'baths'];
+    for (const field of numberFields) {
+      if (formData[field] && (isNaN(parseInt(formData[field], 10)) || parseInt(formData[field], 10) <= 0)) {
+        alert(`The field "${field}" must be a valid positive number.`);
+        return;
+      }
+    }
+  
     const propertyPayload = {
       ...formData,
       image_url: formData.image_url,
     };
-
+  
+    console.log('Submitting property payload:', propertyPayload);
+  
     fetch('/api/properties', {
       method: 'POST',
       body: JSON.stringify({ property: propertyPayload }),
@@ -88,6 +123,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
         alert('There was an error creating the property.');
       });
   };
+  
 
   return (
     <Layout>
@@ -95,37 +131,57 @@ const CreateProperty = ({ onCreateSuccess }) => {
       <h2>Create Property</h2>
       <form className="container" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Title:</label>
+          <label>{requiredLabel('Title:')}</label>
           <input type="text" name="title" onChange={handleChange} required />
         </div>
 
         <div className="form-group">
-          <label>Description:</label>
+          <label>{requiredLabel('Descriptionl:')}</label>
           <textarea name="description" onChange={handleChange} required></textarea>
         </div>
 
         <div className="form-group">
-          <label>City:</label>
+          <label>{requiredLabel('City:')}</label>
           <input type="text" name="city" onChange={handleChange} required />
         </div>
 
         <div className="form-group">
-          <label>Country:</label>
+          <label>{requiredLabel('Country:')}</label>
           <input type="text" name="country" onChange={handleChange} required />
         </div>
 
         <div className="form-group">
-          <label>Property Type:</label>
+          <label>{requiredLabel('Property Type:')}</label>
           <input type="text" name="property_type" onChange={handleChange} required />
         </div>
 
         <div className="form-group">
-          <label>Price per Night:</label>
+          <label>{requiredLabel('Price per Night:')}</label>
           <input type="number" name="price_per_night" onChange={handleChange} required />
         </div>
 
         <div className="form-group">
-          <label>Image:</label>
+          <label>{requiredLabel('Max Guests:')}</label>
+          <input type="number" name="max_guests" onChange={handleChange} required />
+        </div>
+
+        <div className="form-group">
+          <label>Bedrooms:</label>
+          <input type="number" name="bedrooms" onChange={handleChange} />
+        </div>
+
+        <div className="form-group">
+          <label>Beds:</label>
+          <input type="number" name="beds" onChange={handleChange} />
+        </div>
+        
+        <div className="form-group">
+          <label>Baths:</label>
+          <input type="number" name="baths" onChange={handleChange} />
+        </div>
+
+        <div className="form-group">
+          <label>{requiredLabel('Image:')}</label>
           <input type="file" name="image" onChange={handleChange} />
           <button type="button" onClick={handleImageUpload} disabled={!imageFile || isUploading}>
             {isUploading ? 'Uploading...' : 'Upload Image'}

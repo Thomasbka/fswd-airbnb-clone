@@ -17,6 +17,7 @@ class Property extends React.Component {
     fetch(`/api/properties/${this.props.property_id}`)
       .then(handleErrors)
       .then(data => {
+        console.log('Fetched property:', data.property);
         this.setState({
           property: data.property,
           loading: false,

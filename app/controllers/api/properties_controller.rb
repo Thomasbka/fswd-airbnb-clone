@@ -25,6 +25,7 @@ module Api
       if @property.save
         render json: { property: @property }, status: :created
       else
+        Rails.logger.error("Property creation failed: #{@property.errors.full_messages}")
         render json: { errors: @property.errors.full_messages }, status: :unprocessable_entity
       end
     end
@@ -39,20 +40,31 @@ module Api
     end
 
     def upload_image
+      Rails.logger.info("AWS Bucket Name: #{ENV['PHOTO_UPLOAD_BUCKET']}")
+      
       if params[:image].present?
         begin
           s3 = Aws::S3::Resource.new
-          obj = s3.bucket(ENV['S3_BUCKET_NAME']).object("properties/#{SecureRandom.uuid}/#{params[:image].original_filename}")
-          obj.upload_file(params[:image].path, acl: 'public-read')
-
+          bucket_name = ENV['PHOTO_UPLOAD_BUCKET']
+          raise "Bucket name not set" if bucket_name.blank?
+    
+          obj = s3.bucket(bucket_name).object("properties/#{SecureRandom.uuid}/#{params[:image].original_filename}")
+          obj.upload_file(params[:image].path)
+    
           render json: { image_url: obj.public_url }, status: :ok
         rescue Aws::S3::Errors::ServiceError => e
+          Rails.logger.error("S3 upload failed: #{e.message}")
           render json: { error: "Failed to upload image: #{e.message}" }, status: :internal_server_error
+        rescue StandardError => e
+          Rails.logger.error("Error: #{e.message}")
+          render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
         end
       else
+        Rails.logger.debug("No image parameter provided.")
         render json: { error: 'No image provided' }, status: :unprocessable_entity
       end
     end
+    
 
     private
 
