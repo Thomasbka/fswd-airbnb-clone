@@ -54,12 +54,12 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     if (imageFile && !formData.image_url) {
       alert("Please upload the image first.");
       return;
     }
-
+  
     fetch(`/api/properties/${property.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ property: formData }),
@@ -67,14 +67,24 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
     })
       .then(handleErrors)
       .then(data => {
+        console.log('Response data:', data);
+  
+        if (!data) {
+          console.error('Invalid response:', data);
+          alert('There was an error updating the property.');
+          return;
+        }
+  
         alert('Property updated successfully!');
-        if (onUpdate) onUpdate(data.property);
+        if (onUpdate) onUpdate(data);
       })
       .catch(error => {
         console.error('Error updating property:', error);
         alert('There was an error updating the property.');
       });
   };
+  
+  
 
   return (
     <div className="edit-property-form">

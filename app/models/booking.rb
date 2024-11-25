@@ -27,4 +27,8 @@ class Booking < ApplicationRecord
       raise ArgumentError.new("date range overlaps with other bookings")
     end
   end
+
+  def is_paid?
+    self.charges.pluck(:complete).include?(true)
+  end
 end

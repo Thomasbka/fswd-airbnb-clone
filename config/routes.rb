@@ -4,16 +4,21 @@ Rails.application.routes.draw do
   get '/property/:id' => 'static_pages#property'
   get '/properties/new' => 'static_pages#new'
   get '/login' => 'static_pages#login'
+  get '/bookings' => 'static_pages#bookings'
 
   namespace :api do
     resources :users, only: [:create]
-    resources :sessions, only: [:create, :destroy]
-    resources :properties, only: [:index, :show, :create] do
+    resources :sessions, only: [:create] do
+      collection do
+        delete :destroy
+      end
+    end
+    resources :properties, only: [:index, :show, :create, :update] do
       collection do
         post :upload_image
       end
     end
-    resources :bookings, only: [:create]
+    resources :bookings, only: [:index, :create]
     resources :charges, only: [:create]
 
     get '/properties/:id/bookings' => 'bookings#get_property_bookings'

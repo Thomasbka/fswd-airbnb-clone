@@ -24,6 +24,31 @@ module Api
       render 'api/bookings/index'
     end
 
+    def index
+      token = cookies.signed[:airbnb_session_token]
+      session = Session.find_by(token: token)
+      return render json: { error: 'user not logged in' }, status: :unauthorized unless session
+      
+      @bookings = session.user.bookings.includes(:property, :charges)
+      render json: {
+        bookings: @bookings.map do |booking|
+          {
+            id: booking.id,
+            start_date: booking.start_date,
+            end_date: booking.end_date,
+            property: {
+              id: booking.property.it,
+              title: booking.property.title,
+              city: booking.property.city,
+              coutry: booking.propety.country,
+              price_per_night: booking.propety.price_per_night,
+            },
+            is_paid: booking.is_paid?
+          }
+        end
+      }, status: :ok
+    end
+
     private
 
     def booking_params
