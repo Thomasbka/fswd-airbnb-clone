@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Home from '@src/home';
+import CreateProperty from '../src/property/createProperty';
 
 document.addEventListener('DOMContentLoaded', () => {
   const reactRoot = document.getElementById('react-root');
   if (reactRoot) {
-    ReactDOM.render(<Home />, reactRoot);
+    ReactDOM.render(<CreateProperty />, reactRoot);
   }
 });

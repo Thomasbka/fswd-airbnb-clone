@@ -2,13 +2,17 @@ Rails.application.routes.draw do
   root to: 'static_pages#home'
 
   get '/property/:id' => 'static_pages#property'
+  get '/properties/new' => 'static_pages#new'
   get '/login' => 'static_pages#login'
 
   namespace :api do
-    # Add routes below this line
     resources :users, only: [:create]
     resources :sessions, only: [:create, :destroy]
-    resources :properties, only: [:index, :show]
+    resources :properties, only: [:index, :show, :create] do
+      collection do
+        post :upload_image
+      end
+    end
     resources :bookings, only: [:create]
     resources :charges, only: [:create]
 
@@ -16,6 +20,8 @@ Rails.application.routes.draw do
     get '/authenticated' => 'sessions#authenticated'
 
     post '/charges/mark_complete' => 'charges#mark_complete'
+
+    get '/current_user' => 'users#current_user'
 
   end
 
