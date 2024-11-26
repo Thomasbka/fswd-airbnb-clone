@@ -42,7 +42,7 @@ const BookingsIndex = () => {
 
   return (
     <Layout>
-      <div className="container">
+      <div className="container mb-2">
         <h1 className="mt-4">Your Bookings</h1>
         <div className="mt-4 bookings-grid">
           {bookings.map(booking => {

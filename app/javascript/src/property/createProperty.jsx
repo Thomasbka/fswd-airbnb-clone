@@ -136,7 +136,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
         </div>
 
         <div className="form-group">
-          <label>{requiredLabel('Descriptionl:')}</label>
+          <label>{requiredLabel('Description:')}</label>
           <textarea name="description" onChange={handleChange} required></textarea>
         </div>
 
