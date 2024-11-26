@@ -27,6 +27,24 @@ const Layout = (props) => {
     });
   }, []);
 
+  const handleLogout = () => {
+    fetch('/api/sessions', {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+      .then(response => {
+        if (response.ok) {
+          setCurrentUser(null);
+          window.location.href = '/';
+        } else {
+          throw new Error('Logout failed');
+        }
+      })
+      .catch(error => {
+        console.error('Error logging out:', error);
+      });
+  };
+
   return (
     <React.Fragment>
       <nav className="navbar navbar-expand navbar-light bg-light">
@@ -37,9 +55,23 @@ const Layout = (props) => {
               <li className="nav-item">
                 <a className="nav-link" href="/">Home</a>
               </li>
+              {currentUser && (
+                <>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/properties/new">Create Property</a>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="/bookings">My Bookings</a>
+                  </li>
+                </>
+              )}
+            </ul>
+            <ul className="navbar-nav ms-auto">
               {currentUser ? (
                 <li className="nav-item">
-                  <a className="nav-link" href="/properties/new">Create Property</a>
+                  <button className="btn btn-outline-danger" onClick={handleLogout}>
+                    Log Out
+                  </button>
                 </li>
               ) : (
                 <li className="nav-item">
@@ -58,6 +90,6 @@ const Layout = (props) => {
       </footer>
     </React.Fragment>
   );
-}
+};
 
 export default Layout;

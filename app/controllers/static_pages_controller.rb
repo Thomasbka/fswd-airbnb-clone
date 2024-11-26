@@ -16,4 +16,11 @@ class StaticPagesController < ApplicationController
   def new
     render 'createProperty'
   end
+
+  def bookings
+  end
+
+  def booking_success
+    render 'booking_success'
+  end
 end

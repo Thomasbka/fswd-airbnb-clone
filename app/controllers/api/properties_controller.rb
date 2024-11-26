@@ -20,24 +20,26 @@ module Api
       end
     end
 
-    def create
-      @property = current_user.properties.build(property_params)
-      if @property.save
-        render json: { property: @property }, status: :created
-      else
-        Rails.logger.error("Property creation failed: #{@property.errors.full_messages}")
-        render json: { errors: @property.errors.full_messages }, status: :unprocessable_entity
-      end
-    end
-
     def update
-      @property = current_user.properties.find_by(id: params[:id])
-      if @property && @property.update(property_params)
-        render json: { property: @property, message: 'Property updated successfully' }, status: :ok
+      token = cookies.signed[:airbnb_session_token]
+      session = Session.find_by(token: token)
+      Rails.logger.debug "Session: #{session.inspect}"
+      return render json: { error: 'unauthorized' }, status: :unauthorized unless session
+    
+      property = current_user.properties.find_by(id: params[:id])
+      Rails.logger.debug "Property: #{property.inspect}"
+      return render json: { error: 'not found' }, status: :not_found unless property
+    
+      if property.update(property_params)
+        Rails.logger.debug "Updated Property: #{property.inspect}"
+        render json: property.as_json(include: :user), status: :ok
       else
-        render json: { errors: @property ? @property.errors.full_messages : ['Property not found'] }, status: :unprocessable_entity
+        Rails.logger.debug "Update Failed: #{property.errors.full_messages}"
+        render json: { error: 'update failed' }, status: :unprocessable_entity
       end
     end
+     
+    
 
     def upload_image
       Rails.logger.info("AWS Bucket Name: #{ENV['PHOTO_UPLOAD_BUCKET']}")
