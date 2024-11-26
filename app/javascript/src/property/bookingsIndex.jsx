@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Layout from '@src/layout';
 import { handleErrors } from '@utils/fetchHelper';
 import './bookingsIndex.scss';
-import Layout from '../layout';
 
 const BookingsIndex = () => {
   const [bookings, setBookings] = useState([]);
@@ -21,9 +21,15 @@ const BookingsIndex = () => {
   }, []);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <Layout>
+        <div className="container">
+          <p>Loading bookings...</p>
+        </div>
+      </Layout>
+    );
   }
-  
+
   if (bookings.length === 0) {
     return (
       <Layout>
@@ -33,59 +39,38 @@ const BookingsIndex = () => {
       </Layout>
     );
   }
-  
 
   return (
     <Layout>
       <div className="container">
-        <h2>Your Bookings</h2>
-        <div className="row">
-          {bookings.map(booking => (
-            <div key={booking.id} className="col-md-4 mb-4">
-              <div className="card">
-                <div className="card-body">
-                  <h5 className="card-title">{booking.property.title}</h5>
-                  <p className="card-text">
-                    {booking.property.city}, {booking.property.country}
-                  </p>
-                  <p className="card-text">
-                    From: {new Date(booking.start_date).toLocaleDateString()} <br />
-                    To: {new Date(booking.end_date).toLocaleDateString()}
-                  </p>
-                  <p className={`text-${booking.is_paid ? 'success' : 'danger'}`}>
-                    {booking.is_paid ? 'Paid' : 'Not Paid'}
-                  </p>
-                  {!booking.is_paid && (
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => initiateStripeCheckout(booking.id)}
-                    >
-                      Pay Now
-                    </button>
-                  )}
+        <h1 className="mt-4">Your Bookings</h1>
+        <div className="mt-4 bookings-grid">
+          {bookings.map(booking => {
+            const { id, property, start_date, end_date, is_paid } = booking;
+            return (
+              <div
+                className="booking-card"
+                key={id}
+                onClick={() => window.location.href = `/property/${property.id}`}
+              >
+                <img
+                  src={property.image_url}
+                  alt={property.title}
+                  className="booking-image"
+                />
+                <div className="booking-info">
+                  <h3>{property.title}</h3>
+                  <p><b>Dates:</b> {new Date(start_date).toLocaleDateString()} - {new Date(end_date).toLocaleDateString()}</p>
+                  <p><b>Location:</b> {property.city}, {property.country}</p>
+                  <p><b>Paid:</b> {is_paid ? 'Yes' : 'No'}</p>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </Layout>
   );
-};
-
-const initiateStripeCheckout = (bookingId) => {
-  fetch(`/api/charges?booking_id=${bookingId}&cancel_url=/bookings`, {
-    method: 'POST',
-    credentials: 'include',
-  })
-    .then(handleErrors)
-    .then(response => {
-      const stripe = Stripe(`${process.env.STRIPE_PUBLISHABLE_KEY}`);
-      stripe.redirectToCheckout({ sessionId: response.charge.checkout_session_id });
-    })
-    .catch(error => {
-      console.error('Error initiating Stripe checkout:', error);
-    });
 };
 
 export default BookingsIndex;

@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get '/properties/new' => 'static_pages#new'
   get '/login' => 'static_pages#login'
   get '/bookings' => 'static_pages#bookings'
+  get '/booking/:id/success' => 'static_pages#booking_success'
 
   namespace :api do
     resources :users, only: [:create]
@@ -18,7 +19,7 @@ Rails.application.routes.draw do
         post :upload_image
       end
     end
-    resources :bookings, only: [:index, :create]
+    resources :bookings, only: [:index, :create, :show]
     resources :charges, only: [:create]
 
     get '/properties/:id/bookings' => 'bookings#get_property_bookings'
@@ -27,7 +28,7 @@ Rails.application.routes.draw do
     post '/charges/mark_complete' => 'charges#mark_complete'
 
     get '/current_user' => 'users#current_user'
-
   end
 
+  get '*path', to: 'static_pages#home', constraints: ->(req) { !req.xhr? && req.format.html? }
 end

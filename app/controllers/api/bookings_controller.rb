@@ -30,6 +30,7 @@ module Api
       return render json: { error: 'user not logged in' }, status: :unauthorized unless session
       
       @bookings = session.user.bookings.includes(:property, :charges)
+      puts "Bookings fetched: #{@bookings.inspect}"
       render json: {
         bookings: @bookings.map do |booking|
           {
@@ -37,18 +38,31 @@ module Api
             start_date: booking.start_date,
             end_date: booking.end_date,
             property: {
-              id: booking.property.it,
+              id: booking.property.id,
               title: booking.property.title,
               city: booking.property.city,
-              coutry: booking.propety.country,
-              price_per_night: booking.propety.price_per_night,
+              country: booking.property.country,
+              price_per_night: booking.property.price_per_night,
+              image_url: booking.property.image_url
             },
             is_paid: booking.is_paid?
           }
         end
       }, status: :ok
     end
+    
 
+    def show
+      booking = Booking.find_by(id: params[:id])
+      if booking
+        render json: booking.as_json(include: :property), status: :ok
+      else
+        render json: { error: 'Booking not found' }, status: :not_found
+      end
+    end
+    
+    
+    
     private
 
     def booking_params

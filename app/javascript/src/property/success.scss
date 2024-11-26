@@ -1,0 +1,28 @@
+.success-container {
+  max-width: 600px;
+  margin: 50px auto;
+  text-align: center;
+
+  .booking-details {
+    margin: 20px 0;
+
+    .property-image {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    h3 {
+      margin: 15px 0;
+    }
+
+    p {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+  }
+
+  button {
+    margin-top: 20px;
+  }
+}
