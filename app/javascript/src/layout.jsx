@@ -82,7 +82,7 @@ const Layout = (props) => {
           </div>
         </div>
       </nav>
-      {props.children}
+      <main className="wrapper">{props.children}</main>
       <footer className="p-3 bg-light text-center">
         <div>
           <p className="mb-0 text-secondary">Airbnb Clone</p>
