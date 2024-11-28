@@ -15,10 +15,10 @@ const CreateProperty = ({ onCreateSuccess }) => {
     bedrooms: '',
     beds: '',
     baths: '',
-    image_url: '',
   });
+  
   const [imageFile, setImageFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const requiredLabel = (label) => (
     <span>
@@ -28,59 +28,16 @@ const CreateProperty = ({ onCreateSuccess }) => {
   );
 
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, files } = e.target;
     if (type === 'file') {
-      setImageFile(e.target.files[0]);
+      setImageFile(files[0]);
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  const handleImageUpload = () => {
-    if (!imageFile) {
-      alert('No image selected');
-      return;
-    }
-  
-    setIsUploading(true);
-  
-    const uploadData = new FormData();
-    uploadData.append('image', imageFile);
-  
-    const csrfToken = document.querySelector('[name=csrf-token]')?.content;
-  
-    console.log('UploadData:', Array.from(uploadData.entries()));
-  
-    fetch('/api/properties/upload_image', {
-      method: 'POST',
-      body: uploadData,
-      headers: {
-        'X-CSRF-Token': csrfToken,
-      },
-    })
-      .then(handleErrors)
-      .then(data => {
-        setFormData(prevData => ({
-          ...prevData,
-          image_url: data.image_url,
-        }));
-        setIsUploading(false);
-        alert('Image uploaded successfully!');
-      })
-      .catch(error => {
-        console.error('Error uploading image:', error);
-        setIsUploading(false);
-        alert('There was an error uploading the image.');
-      });
-  };
-  
   const handleSubmit = (e) => {
     e.preventDefault();
-  
-    if (imageFile && !formData.image_url) {
-      alert('Please upload the image first.');
-      return;
-    }
 
     const requiredFields = ['title', 'description', 'city', 'country', 'property_type', 'price_per_night', 'max_guests'];
     for (const field of requiredFields) {
@@ -97,100 +54,104 @@ const CreateProperty = ({ onCreateSuccess }) => {
         return;
       }
     }
-  
-    const propertyPayload = {
-      ...formData,
-      image_url: formData.image_url,
-    };
-  
-    console.log('Submitting property payload:', propertyPayload);
-  
+
+    const propertyPayload = new FormData();
+    for (const key in formData) {
+      propertyPayload.append(`property[${key}]`, formData[key]);
+    }
+
+    if (imageFile) {
+      propertyPayload.append('property[image]', imageFile);
+    }
+
+    setIsSubmitting(true);
+
     fetch('/api/properties', {
       method: 'POST',
-      body: JSON.stringify({ property: propertyPayload }),
+      body: propertyPayload,
       headers: {
-        'Content-Type': 'application/json',
         ...safeCredentials().headers,
       },
     })
       .then(handleErrors)
-      .then(data => {
+      .then((data) => {
         alert('Property created successfully!');
         if (onCreateSuccess) onCreateSuccess(data.property);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error creating property:', error);
         alert('There was an error creating the property.');
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
-  
 
   return (
     <Layout>
-    <div className="create-property-form">
-      <h2>Create Property</h2>
-      <form className="container" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>{requiredLabel('Title:')}</label>
-          <input type="text" name="title" onChange={handleChange} required />
-        </div>
+      <div className="create-property-form">
+        <h2>Create Property</h2>
+        <form className="container" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>{requiredLabel('Title:')}</label>
+            <input type="text" name="title" onChange={handleChange} required />
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('Description:')}</label>
-          <textarea name="description" onChange={handleChange} required></textarea>
-        </div>
+          <div className="form-group">
+            <label>{requiredLabel('Description:')}</label>
+            <textarea name="description" onChange={handleChange} required></textarea>
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('City:')}</label>
-          <input type="text" name="city" onChange={handleChange} required />
-        </div>
+          <div className="form-group">
+            <label>{requiredLabel('City:')}</label>
+            <input type="text" name="city" onChange={handleChange} required />
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('Country:')}</label>
-          <input type="text" name="country" onChange={handleChange} required />
-        </div>
+          <div className="form-group">
+            <label>{requiredLabel('Country:')}</label>
+            <input type="text" name="country" onChange={handleChange} required />
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('Property Type:')}</label>
-          <input type="text" name="property_type" onChange={handleChange} required />
-        </div>
+          <div className="form-group">
+            <label>{requiredLabel('Property Type:')}</label>
+            <input type="text" name="property_type" onChange={handleChange} required />
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('Price per Night:')}</label>
-          <input type="number" name="price_per_night" onChange={handleChange} required />
-        </div>
+          <div className="form-group">
+            <label>{requiredLabel('Price per Night:')}</label>
+            <input type="number" name="price_per_night" onChange={handleChange} required />
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('Max Guests:')}</label>
-          <input type="number" name="max_guests" onChange={handleChange} required />
-        </div>
+          <div className="form-group">
+            <label>{requiredLabel('Max Guests:')}</label>
+            <input type="number" name="max_guests" onChange={handleChange} required />
+          </div>
 
-        <div className="form-group">
-          <label>Bedrooms:</label>
-          <input type="number" name="bedrooms" onChange={handleChange} />
-        </div>
+          <div className="form-group">
+            <label>Bedrooms:</label>
+            <input type="number" name="bedrooms" onChange={handleChange} />
+          </div>
 
-        <div className="form-group">
-          <label>Beds:</label>
-          <input type="number" name="beds" onChange={handleChange} />
-        </div>
-        
-        <div className="form-group">
-          <label>Baths:</label>
-          <input type="number" name="baths" onChange={handleChange} />
-        </div>
+          <div className="form-group">
+            <label>Beds:</label>
+            <input type="number" name="beds" onChange={handleChange} />
+          </div>
 
-        <div className="form-group">
-          <label>{requiredLabel('Image:')}</label>
-          <input type="file" name="image" onChange={handleChange} />
-          <button type="button" onClick={handleImageUpload} disabled={!imageFile || isUploading}>
-            {isUploading ? 'Uploading...' : 'Upload Image'}
+          <div className="form-group">
+            <label>Baths:</label>
+            <input type="number" name="baths" onChange={handleChange} />
+          </div>
+
+          <div className="form-group">
+            <label>{requiredLabel('Image:')}</label>
+            <input type="file" name="image" onChange={handleChange} />
+          </div>
+
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating Property...' : 'Create Property'}
           </button>
-        </div>
-
-        <button type="submit" disabled={isUploading}>Create Property</button>
-      </form>
-    </div>
+        </form>
+      </div>
     </Layout>
   );
 };
