@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { safeCredentials, handleErrors } from '@utils/fetchHelper';
+import { safeCredentials, handleErrors, getAuthenticityToken} from '@utils/fetchHelper';
 import './createProperty.scss';
 import Layout from '../layout';
 
@@ -16,7 +16,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
     beds: '',
     baths: '',
   });
-  
+
   const [imageFile, setImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,7 +38,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     const requiredFields = ['title', 'description', 'city', 'country', 'property_type', 'price_per_night', 'max_guests'];
     for (const field of requiredFields) {
       if (!formData[field] || formData[field].toString().trim() === '') {
@@ -54,28 +54,42 @@ const CreateProperty = ({ onCreateSuccess }) => {
         return;
       }
     }
-
+  
+    if (!imageFile) {
+      alert('Please upload an image before submitting.');
+      return;
+    }
+  
     const propertyPayload = new FormData();
     for (const key in formData) {
       propertyPayload.append(`property[${key}]`, formData[key]);
     }
-
-    if (imageFile) {
-      propertyPayload.append('property[image]', imageFile);
-    }
-
+    propertyPayload.append('property[image]', imageFile);
+    propertyPayload.append('authenticity_token', getAuthenticityToken());
+  
     setIsSubmitting(true);
-
+  
     fetch('/api/properties', {
       method: 'POST',
       body: propertyPayload,
-      headers: {
-        ...safeCredentials().headers,
-      },
+      credentials: 'include',
     })
       .then(handleErrors)
       .then((data) => {
         alert('Property created successfully!');
+        setFormData({
+          title: '',
+          description: '',
+          city: '',
+          country: '',
+          property_type: '',
+          price_per_night: '',
+          max_guests: '',
+          bedrooms: '',
+          beds: '',
+          baths: '',
+        });
+        setImageFile(null);
         if (onCreateSuccess) onCreateSuccess(data.property);
       })
       .catch((error) => {
@@ -86,6 +100,7 @@ const CreateProperty = ({ onCreateSuccess }) => {
         setIsSubmitting(false);
       });
   };
+  
 
   return (
     <Layout>

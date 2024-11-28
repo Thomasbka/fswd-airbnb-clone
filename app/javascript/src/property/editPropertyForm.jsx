@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { safeCredentials, handleErrors } from '@utils/fetchHelper';
+import { handleErrors, safeCredentials } from '@utils/fetchHelper';
 import './editPropertyForm.scss';
 
 const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
@@ -13,7 +13,7 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -35,20 +35,23 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
     }
 
     const propertyPayload = new FormData();
-    for (const key in formData) {
+    Object.keys(formData).forEach((key) => {
       propertyPayload.append(`property[${key}]`, formData[key]);
-    }
+    });
+
     if (imageFile) {
       propertyPayload.append('property[image]', imageFile);
     }
 
     setIsSubmitting(true);
+    
 
     fetch(`/api/properties/${property.id}`, {
       method: 'PATCH',
       body: propertyPayload,
+      credentials: 'include',
       headers: {
-        ...safeCredentials().headers,
+        Accept: 'application/json',
       },
     })
       .then(handleErrors)
@@ -70,23 +73,40 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
       <h2>Edit Property</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Title:</label>
-          <input type="text" name="title" value={formData.title} onChange={handleChange} />
+          <label htmlFor="title">Title:</label>
+          <input
+            id="title"
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="form-group">
-          <label>Description:</label>
-          <textarea name="description" value={formData.description} onChange={handleChange}></textarea>
+          <label htmlFor="description">Description:</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          ></textarea>
         </div>
 
         <div className="form-group">
-          <label>Price per Night:</label>
-          <input type="number" name="price_per_night" value={formData.price_per_night} onChange={handleChange} />
+          <label htmlFor="price_per_night">Price per Night:</label>
+          <input
+            id="price_per_night"
+            type="number"
+            name="price_per_night"
+            value={formData.price_per_night}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="form-group">
-          <label>Image:</label>
-          <input type="file" onChange={handleImageChange} />
+          <label htmlFor="image">Image:</label>
+          <input id="image" type="file" onChange={handleImageChange} />
         </div>
 
         <button type="submit" disabled={isSubmitting}>

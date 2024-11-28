@@ -1,5 +1,6 @@
 module Api
   class PropertiesController < ApplicationController
+    skip_before_action :verify_authenticity_token, only: [:create, :update]
     before_action :authenticate_user, only: [:create, :update]
 
     def index
@@ -27,31 +28,40 @@ module Api
     
       property = current_user.properties.find_by(id: params[:id])
       return render json: { error: 'not found' }, status: :not_found unless property
-
-      if params[:image].present?
-        property.image.attach(params[:image])
-      end
+    
+      property.image.attach(params[:property][:image]) if params[:property][:image].present?
     
       if property.update(property_params)
+        @property = property
         render 'api/properties/show', status: :ok
       else
         render json: { error: property.errors.full_messages }, status: :unprocessable_entity
       end
     end
+    
 
     def create
       @property = current_user.properties.new(property_params)
-
-      if params[:image].present?
-        @propety.image.attach(params[:image])
+    
+      if params[:property][:image].present?
+        @property.image.attach(
+          io: params[:property][:image],
+          filename: params[:property][:image].original_filename,
+          content_type: params[:property][:image].content_type,
+          key: "properties/#{SecureRandom.uuid}/#{params[:property][:image].original_filename}"
+        )
       end
-
+    
       if @property.save
-        render 'api/propertires/create', status: :created
+        render 'api/properties/show', status: :created
       else
+        Rails.logger.error @property.errors.full_messages
         render json: { error: @property.errors.full_messages }, status: :unprocessable_entity
       end
     end
+    
+    
+    
 
     private
 
@@ -79,6 +89,7 @@ module Api
         :bedrooms,
         :beds,
         :baths,
+        :image
       )
     end
   end
