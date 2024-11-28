@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { safeCredentials, handleErrors } from '@utils/fetchHelper';
+import { handleErrors, safeCredentials } from '@utils/fetchHelper';
 import './editPropertyForm.scss';
 
 const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
@@ -7,14 +7,13 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
     title: property.title || '',
     description: property.description || '',
     price_per_night: property.price_per_night || '',
-    image_url: property.image_url || '',
   });
   const [imageFile, setImageFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -24,96 +23,95 @@ const EditPropertyForm = ({ property, onUpdate, onCancel }) => {
     setImageFile(e.target.files[0]);
   };
 
-  const handleImageUpload = () => {
-    if (!imageFile) return;
-    
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('image', imageFile);
-
-    fetch('/api/properties/upload_image', {
-      method: 'POST',
-      body: formData,
-      ...safeCredentials(),
-    })
-      .then(handleErrors)
-      .then(data => {
-        setFormData(prevData => ({
-          ...prevData,
-          image_url: data.image_url,
-        }));
-        setIsUploading(false);
-        alert('Image uploaded successfully!');
-      })
-      .catch(error => {
-        console.error('Error uploading image:', error);
-        setIsUploading(false);
-        alert('There was an error uploading the image.');
-      });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-  
-    if (imageFile && !formData.image_url) {
-      alert("Please upload the image first.");
-      return;
+
+    const requiredFields = ['title', 'description', 'price_per_night'];
+    for (const field of requiredFields) {
+      if (!formData[field] || formData[field].toString().trim() === '') {
+        alert(`The field "${field}" is required.`);
+        return;
+      }
     }
-  
+
+    const propertyPayload = new FormData();
+    Object.keys(formData).forEach((key) => {
+      propertyPayload.append(`property[${key}]`, formData[key]);
+    });
+
+    if (imageFile) {
+      propertyPayload.append('property[image]', imageFile);
+    }
+
+    setIsSubmitting(true);
+    
+
     fetch(`/api/properties/${property.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ property: formData }),
-      ...safeCredentials(),
+      body: propertyPayload,
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+      },
     })
       .then(handleErrors)
-      .then(data => {
-        console.log('Response data:', data);
-  
-        if (!data) {
-          console.error('Invalid response:', data);
-          alert('There was an error updating the property.');
-          return;
-        }
-  
+      .then((data) => {
         alert('Property updated successfully!');
-        if (onUpdate) onUpdate(data);
+        if (onUpdate) onUpdate(data.property);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Error updating property:', error);
         alert('There was an error updating the property.');
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
-  
-  
 
   return (
     <div className="edit-property-form">
       <h2>Edit Property</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Title:</label>
-          <input type="text" name="title" value={formData.title} onChange={handleChange} />
+          <label htmlFor="title">Title:</label>
+          <input
+            id="title"
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="form-group">
-          <label>Description:</label>
-          <textarea name="description" value={formData.description} onChange={handleChange}></textarea>
+          <label htmlFor="description">Description:</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          ></textarea>
         </div>
 
         <div className="form-group">
-          <label>Price per Night:</label>
-          <input type="number" name="price_per_night" value={formData.price_per_night} onChange={handleChange} />
+          <label htmlFor="price_per_night">Price per Night:</label>
+          <input
+            id="price_per_night"
+            type="number"
+            name="price_per_night"
+            value={formData.price_per_night}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="form-group">
-          <label>Image:</label>
-          <input type="file" onChange={handleImageChange} />
-          <button type="button" onClick={handleImageUpload} disabled={!imageFile || isUploading}>
-            {isUploading ? 'Uploading...' : 'Upload Image'}
-          </button>
+          <label htmlFor="image">Image:</label>
+          <input id="image" type="file" onChange={handleImageChange} />
         </div>
 
-        <button type="submit" disabled={isUploading}>Save Changes</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
+        </button>
         {onCancel && (
           <button type="button" className="cancel-button" onClick={onCancel}>
             Cancel

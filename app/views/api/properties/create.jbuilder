@@ -10,10 +10,11 @@ json.property do
   json.bedrooms @property.bedrooms
   json.beds @property.beds
   json.baths @property.baths
+  
+  json.image_url @property.image.attached? ? url_for(@property.image) : nil
 
-  if @property.image.attached?
-    json.image_url url_for(@property.image)
-  else
-    json.image_url nil
+  json.user do
+    json.id @property.user.id
+    json.username @property.user.username
   end
 end

@@ -1,5 +1,6 @@
 module Api
   class PropertiesController < ApplicationController
+    skip_before_action :verify_authenticity_token, only: [:create, :update]
     before_action :authenticate_user, only: [:create, :update]
 
     def index
@@ -23,49 +24,43 @@ module Api
     def update
       token = cookies.signed[:airbnb_session_token]
       session = Session.find_by(token: token)
-      Rails.logger.debug "Session: #{session.inspect}"
       return render json: { error: 'unauthorized' }, status: :unauthorized unless session
     
       property = current_user.properties.find_by(id: params[:id])
-      Rails.logger.debug "Property: #{property.inspect}"
       return render json: { error: 'not found' }, status: :not_found unless property
     
+      property.image.attach(params[:property][:image]) if params[:property][:image].present?
+    
       if property.update(property_params)
-        Rails.logger.debug "Updated Property: #{property.inspect}"
-        render json: property.as_json(include: :user), status: :ok
+        @property = property
+        render 'api/properties/show', status: :ok
       else
-        Rails.logger.debug "Update Failed: #{property.errors.full_messages}"
-        render json: { error: 'update failed' }, status: :unprocessable_entity
+        render json: { error: property.errors.full_messages }, status: :unprocessable_entity
       end
     end
-     
     
 
-    def upload_image
-      Rails.logger.info("AWS Bucket Name: #{ENV['PHOTO_UPLOAD_BUCKET']}")
-      
-      if params[:image].present?
-        begin
-          s3 = Aws::S3::Resource.new
-          bucket_name = ENV['PHOTO_UPLOAD_BUCKET']
-          raise "Bucket name not set" if bucket_name.blank?
+    def create
+      @property = current_user.properties.new(property_params)
     
-          obj = s3.bucket(bucket_name).object("properties/#{SecureRandom.uuid}/#{params[:image].original_filename}")
-          obj.upload_file(params[:image].path)
+      if params[:property][:image].present?
+        @property.image.attach(
+          io: params[:property][:image],
+          filename: params[:property][:image].original_filename,
+          content_type: params[:property][:image].content_type,
+          key: "properties/#{SecureRandom.uuid}/#{params[:property][:image].original_filename}"
+        )
+      end
     
-          render json: { image_url: obj.public_url }, status: :ok
-        rescue Aws::S3::Errors::ServiceError => e
-          Rails.logger.error("S3 upload failed: #{e.message}")
-          render json: { error: "Failed to upload image: #{e.message}" }, status: :internal_server_error
-        rescue StandardError => e
-          Rails.logger.error("Error: #{e.message}")
-          render json: { error: "An error occurred: #{e.message}" }, status: :internal_server_error
-        end
+      if @property.save
+        render 'api/properties/show', status: :created
       else
-        Rails.logger.debug("No image parameter provided.")
-        render json: { error: 'No image provided' }, status: :unprocessable_entity
+        Rails.logger.error @property.errors.full_messages
+        render json: { error: @property.errors.full_messages }, status: :unprocessable_entity
       end
     end
+    
+    
     
 
     private
@@ -94,7 +89,7 @@ module Api
         :bedrooms,
         :beds,
         :baths,
-        :image_url
+        :image
       )
     end
   end

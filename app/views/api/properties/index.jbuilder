@@ -9,6 +9,6 @@ json.properties do
     json.country property.country
     json.property_type property.property_type
     json.price_per_night property.price_per_night
-    json.image_url property.image_url
+    json.image_url property.image.attached? ? url_for(property.image) : nil
   end
 end
